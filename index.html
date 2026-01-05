@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitRep Calculator</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light">
+
+    <header class="card p-4 shadow-sm mb-4 text-center">
+            <h1 class="display-5">USMC FitRep Calculator</h1>
+            <p class="lead text-muted">See projected Relative Values for FitReps before submitting. Generate accurate Section I comments quickly and easily.</p>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row min-vh-100"> 
+            <nav class="col-md-4 col-lg-3 d-md-block bg-dark text-white sidebar collapse p-3" style="min-height: 100vh;">
+    
+                <h4 class="text-center my-3" id="sb_title"></h4>
+                <hr class="border-light">
+
+                <h6 class="text-uppercase text-muted small fw-bold">Profile Stats</h6>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm table-bordered small text-center">
+                        <thead>
+                            <tr>
+                                <th scope="col">Prof</th> 
+                                <th scope="col">High</th>
+                                <th scope="col">Low</th>
+                                <th scope="col">Avg</th>
+                                <th scope="col"># Rpt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span id="op-title">-</span></td>
+                                <td><span id="op-high">-</span></td>
+                                <td><span id="op-low">-</span></td>
+                                <td><span id="op-avg">-</span></td>
+                                <td><span id="op-reports">-</span></td>
+                            </tr>
+                        </tbody>
+                        <tbody>
+                            <tr>
+                                <td class="fst-italic"><span id="ap-title">-</span></td>
+                                <td class="fst-italic"><span id="ap-high">-</span></td>
+                                <td class="fst-italic"><span id="ap-low">-</span></td>
+                                <td class="fst-italic"><span id="ap-avg">-</span></td>
+                                <td class="fst-italic"><span id="ap-reports">-</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="my-4 p-2 border border-secondary rounded bg-secondary bg-opacity-10">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-2">Metrics / Analysis</h6>
+                    <p class="small fst-italic mb-0" id="sb-metrics-text">
+                        No active calculations. <br>
+                        Please complete profile setup.
+                    </p>
+                </div>
+
+                <h6 class="text-uppercase text-muted small fw-bold">Reports Ledger</h6>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm table-bordered small text-center">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Avg</th>
+                                <th scope="col">Proc</th>
+                                <th scope="col">Cum</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sb-reports-body">
+                            <tr>
+                                <td colspan="4" class="text-muted">No reports added</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </nav>
+
+            <main class="col-md-8 ms-sm-auto col-lg-9 px-md-4 py-4">
+                
+                <div id="page-profile">
+                    <h2>Step 1: RS Profile</h2>
+                    <p class="text-muted">Enter the RS averages and cumulative totals.</p>
+                    
+                    <div class="card p-4 shadow-sm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="profile-rank" class="form-label fw-bold">Rank</label>
+                                <select id="profile-rank" class="form-select"></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="profile-reports" class="form-label fw-bold">Total Reports</label>
+                                <input type="number" id="profile-reports" class="form-control" step="1" placeholder="0">
+                            </div>
+                            <div class="col-md-4">
+                                
+                            </div>
+                            <div class="col-md-4">
+                                <label for="profile-high" class="form-label fw-bold">RS High</label>
+                                <input type="number" id="profile-high" class="form-control" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="profile-avg" class="form-label fw-bold">RS Avg</label>
+                                <input type="number" id="profile-avg" class="form-control" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="profile-low" class="form-label fw-bold">RS Low</label>
+                                <input type="number" id="profile-low" class="form-control" step="0.01" placeholder="0.00">
+                            </div>
+                            
+                        </div>
+
+                        <div class="mt-4 text-beginning">
+                            <button id="btn-save-profile" class="btn btn-success px-4">Save & Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-reports" style="display: none;">
+                    <h2>Step 2: Reports</h2>
+                    <p>Report inputs will go here...</p>
+                </div>
+
+                <div id="page-narratives" style="display: none;">
+                    <h2>Step 3: Narratives</h2>
+                    <p>Narrative generation will go here...</p>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>

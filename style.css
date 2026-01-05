@@ -1,0 +1,8 @@
+/* This targets the <header> tag */
+header {
+    border: 2px solid black; /* Thickness, Style, Color */
+    padding: 20px;           /* Adds breathing room inside the border */
+    margin-bottom: 20px;     /* Adds space below the border */
+    border-radius: 8px;      /* Optional: Makes the corners slightly round */
+    text-align: center;      /* Centers the text inside */
+}

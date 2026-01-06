@@ -56,13 +56,35 @@
                     </table>
                 </div>
 
-                <div class="my-4 p-2 border border-secondary rounded bg-secondary bg-opacity-10">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-2">Metrics / Analysis</h6>
-                    <p class="small fst-italic mb-0" id="sb-metrics-text">
-                        No active calculations. <br>
-                        Please complete profile setup.
-                    </p>
+                <div class="card mb-3 shadow-sm border border-secondary rounded bg-secondary bg-opacity-10">
+                    <div class="card-header bg-secondary bg-opacity-10 text-uppercase small fw-bold text-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-pencil-square text-white me-2"></i>Current Report
+                        </div>
+                        <span id="sb-rpt-header-name" class="text-white-50 fst-italic fw-normal text-end" style="font-size: 0.75rem;"></span>
+                    </div>
+
+                    <div class="card-body">
+                        
+                        <div class="row text-center g-2 mt-1">
+                            <div class="col-4 border-end border-secondary border-opacity-25">
+                                <small class="d-block text-white-50 text-uppercase fw-bold" style="font-size: 0.65rem;">Average</small>
+                                <span class="h3 fw-bold text-white mb-0" id="sb-rpt-avg">0.00</span>
+                            </div>
+                            
+                            <div class="col-4 border-end border-secondary border-opacity-25">
+                                <small class="d-block text-white-50 text-uppercase fw-bold" style="font-size: 0.65rem;">RV Proc</small>
+                                <span class="h3 fw-bold text-white mb-0" id="sb-rpt-rv-proc">-</span>
+                            </div>
+                            
+                            <div class="col-4">
+                                <small class="d-block text-white-50 text-uppercase fw-bold" style="font-size: 0.65rem;">RV Cum</small>
+                                <span class="h3 fw-bold text-white mb-0" id="sb-rpt-rv-cum">-</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
 
                 <h6 class="text-uppercase text-muted small fw-bold">Reports Ledger</h6>
                 <div class="table-responsive">
@@ -91,7 +113,7 @@
                     <h2>Step 1: RS Profile</h2>
                     <p class="text-muted">Enter the RS averages and cumulative totals.</p>
                     
-                    <div class="card p-4 shadow-sm">
+                    <div class="card p-4 shadow-sm border-secondary">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="profile-rank" class="form-label fw-bold">Rank</label>
@@ -126,8 +148,69 @@
                 </div>
 
                 <div id="page-reports" style="display: none;">
-                    <h2>Step 2: Reports</h2>
-                    <p>Report inputs will go here...</p>
+    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Step 2: Add Report</h2>
+                        
+                    </div>
+
+                    <div class="card p-4 shadow-sm border-secondary">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-2"> 
+                                <label for="rpt-rank-display" class="form-label fw-bold">Rank</label>
+                                <input type="text" id="rpt-rank-display" class="form-control bg-light" value="Loading..." readonly disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="rpt-name" class="form-label fw-bold">Name</label>
+                                <input type="text" id="rpt-name" class="form-control" placeholder="LAST">
+                            </div>
+                        </div>
+
+                        <h5 class="card-title border-bottom pb-2 mb-3">Attributes</h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <table class="table table-hover align-middle w-auto"> 
+                                    <tbody id="report-attributes-container">
+                                        </tbody>
+                                </table>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top">
+                            <button id="btn-add-report" class="btn btn-primary px-4">
+                                <i class="bi bi-plus-lg"></i> Add to Profile
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-beginning">
+                        <button id="btn-finish-reports" class="btn btn-success" disabled>
+                            Next: Narratives &rarr;
+                        </button>
+                    </div>
+
+                    <div class="mt-5">
+                        <h5>Report History</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered text-center align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Avg</th>
+                                        <th>Proc</th>
+                                        <th>Cum</th>
+                                        </tr>
+                                </thead>
+                                <tbody id="main-reports-list">
+                                    <tr>
+                                        <td colspan="5" class="text-muted fst-italic py-3">No reports added to this profile yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>                      
+                    </div>
                 </div>
 
                 <div id="page-narratives" style="display: none;">

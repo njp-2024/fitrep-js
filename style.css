@@ -6,3 +6,17 @@ header {
     border-radius: 8px;      /* Optional: Makes the corners slightly round */
     text-align: center;      /* Centers the text inside */
 }
+
+/* TARGET: Only buttons that are currently checked/selected */
+.btn-check:checked + .btn-outline-secondary {
+    background-color: rgba(13, 110, 253, 0.8);  /* The Fill Color (Currently Blue) */
+    border-color: #0d6efd;      /* The Border Color */
+    color: white;               /* The Text Color */
+}
+
+/* HOVER STATE: Only for buttons that are NOT currently selected */
+.btn-check:not(:checked) + .btn-outline-secondary:hover {
+    background-color: rgba(13, 110, 253, 0.4); /* Stop the solid fill */
+    border-color: #0d6efd;         /* Change Border to Blue (or your custom color) */
+    color: white;                /* Change Text to Blue */
+}

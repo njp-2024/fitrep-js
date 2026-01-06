@@ -26,3 +26,31 @@ export class ProfileValidator {
         return errors; // Returns empty array if valid, list of strings if invalid
     }
 }
+
+export class ReportValidator {
+    /**
+     * Checks if the name exists and is within limits
+     */
+    static isValidName(name) {
+        if (!name || name.trim() === "") return false;
+        if (name.length > 30) return false;
+        return true;
+    }
+
+    /**
+     * Checks if the scores are complete and meaningful
+     * @param {Array} scores - Array of integers
+     * @param {Number} totalAttributes - How many attributes expected (14)
+     */
+    static areScoresValid(scores, totalAttributes) {
+        // Rule 1: Must have a score for every attribute
+        if (!scores || scores.length !== totalAttributes) return false;
+
+        // Rule 2: Cannot be ALL "Not Observed" (0)
+        // returns true if EVERY score is 0
+        const allH = scores.every(score => score === 0);
+        if (allH) return false;
+
+        return true;
+    }
+}

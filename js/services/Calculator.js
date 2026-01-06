@@ -12,13 +12,19 @@ export class CalculatorService {
         if (!baseProfile) return null;
 
         // 1. Calculate the "Mass" of the base profile
-        let totalScore = baseProfile.baseAvg * baseProfile.baseReportsCount;
-        let totalCount = baseProfile.baseReportsCount;
+        let totalScore = baseProfile.avg * baseProfile.reports;
+        let totalCount = baseProfile.reports;
+        // Logic: Start with the base High/Low, then check if any new report beats them.
+        let newHigh = baseProfile.high;
+        let newLow = baseProfile.low;
+
 
         // 2. Add the "Mass" of the new reports
         reportsList.forEach(rpt => {
             totalScore += rpt.average;
             totalCount++;
+            if (rpt.average > newHigh) newHigh = rpt.average
+            if (rpt.average < newLow) newLow = rpt.average
         });
 
         // 3. Create a fresh profile object for the result
@@ -28,17 +34,6 @@ export class CalculatorService {
         // 4. Update the Calculated Average
         resultProfile.reports = totalCount;
         resultProfile.avg = totalCount > 0 ? (totalScore / totalCount) : 0;
-
-        // 5. Update High/Low
-        // Logic: Start with the base High/Low, then check if any new report beats them.
-        let newHigh = baseProfile.high;
-        let newLow = baseProfile.low;
-
-        reportsList.forEach(rpt => {
-            if (rpt.average > newHigh) newHigh = rpt.average;
-            if (rpt.average < newLow) newLow = rpt.average;
-        });
-
         resultProfile.high = newHigh;
         resultProfile.low = newLow;
 

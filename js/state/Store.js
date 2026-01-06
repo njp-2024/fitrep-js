@@ -26,7 +26,8 @@ class AppStore {
      * @param {Report} report 
      */
     upsertReport(report) {
-        const index = this.reportsList.findIndex(r => r.id === report.id);
+        const index = this.reportsList.findIndex(r => r.name === report.name);
+        console.log(index)
         if (index !== -1) {
             this.reportsList[index] = report; // Update
         } else {

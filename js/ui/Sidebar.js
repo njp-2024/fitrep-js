@@ -74,9 +74,9 @@ export class Sidebar {
      * @param {Report[]} reportsList - The list of saved reports
      * @param {RankProfile} baseProfile - Needed to calculate the running cumulative avg
      */
-    static updateHistory(reportsList, baseProfile) {
+    static updateHistory(reportsList) {
         const tbody = document.getElementById('sb-reports-body');
-        if (!tbody || !baseProfile) return;
+        if (!tbody) return;
 
         tbody.innerHTML = ""; // Clear list
 
@@ -85,22 +85,14 @@ export class Sidebar {
             return;
         }
 
-        // Running Calculation for the "Cum" column
-        let runningScore = baseProfile.avg * baseProfile.reports;
-        let runningCount = baseProfile.reports;
-
         reportsList.forEach(rpt => {
-            runningScore += rpt.average;
-            runningCount++;
-            const currentCumAvg = runningScore / runningCount;
-
             const row = `
                 <tr>
                     <td class="text-start ps-3 fw-bold text-nowrap" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis;">
                         ${rpt.name}
                     </td>
                     <td class="text-primary">${rpt.average.toFixed(2)}</td>
-                    <td class="fw-bold">${currentCumAvg.toFixed(2)}</td>
+                    <td class="fw-bold">5</td>
                 </tr>
             `;
             tbody.innerHTML += row;
@@ -111,9 +103,9 @@ export class Sidebar {
      * Convenience method to update all three sections at once
      */
     static refreshAll(activeProfile, formReport, reportsList, baseProfile) {
-        this.updateProfileStats(activeProfile);
+        this.updateProfileStats(baseProfile, activeProfile);
         this.updateActiveReport(formReport, activeProfile ? activeProfile.rank : "");
         // Note: We usually only update history with the SAVED list, not projected
-        this.updateHistory(reportsList, baseProfile);
+        this.updateHistory(reportsList);
     }
 }

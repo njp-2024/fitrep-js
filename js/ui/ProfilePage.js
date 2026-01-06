@@ -37,8 +37,6 @@ export class ProfilePage {
         const high = document.getElementById('profile-high').value;
         const low = document.getElementById('profile-low').value;
 
-        console.log(rank, avg, reports, high, low)
-
         const errors = ProfileValidator.validate(rank, avg, reports, high, low);
         if (errors.length > 0) {
             alert(errors.join('\n'));

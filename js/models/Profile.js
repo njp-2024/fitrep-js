@@ -1,7 +1,7 @@
 // js/models/Profile.js
 
 export class RankProfile {
-    constructor(rank, high, avg, low, reportCount) {
+    constructor(rank, high, low, avg, reportCount) {
         this.rank = rank;
         // Convert strings to floats/ints immediately upon creation
         this.high = parseFloat(high);

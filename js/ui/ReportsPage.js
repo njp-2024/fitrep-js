@@ -96,8 +96,9 @@ export class ReportsPage {
         // D. PROJECTION ENGINE
         // If form is empty/invalid, revert sidebar to "Saved State"
         if (!formReport) {
-            Sidebar.updateProfileStats(store.getActiveProfile());
+            Sidebar.updateProfileStats(store.getOriginalProfile(), store.getActiveProfile());
             Sidebar.updateActiveReport(null);
+            Sidebar.updateHistory(store.getReports())
             return;
         }
 
@@ -115,10 +116,11 @@ export class ReportsPage {
 
         // 3. Run Math on Projected List
         const projectedProfile = CalculatorService.calculateStats(store.getOriginalProfile(), projectedList);
-
+        
         // 4. Update Sidebar with Projection (Visual Only - No Save)
-        Sidebar.updateProfileStats(projectedProfile);
+        Sidebar.updateProfileStats(store.getOriginalProfile(), projectedProfile);
         Sidebar.updateActiveReport(formReport, store.getActiveProfile().rank);
+        Sidebar.updateHistory(projectedList)
     }
 
     // --- CORE LOGIC: COMMIT (SAVE) ---
@@ -166,6 +168,17 @@ export class ReportsPage {
         return new Report(name, store.getActiveProfile().rank, scores);
     }
 
+    // Sets all radio buttons to a specific array of values
+    static setFormScores(scoresArray) {
+        if (!scoresArray || scoresArray.length !== REPORT_ATTRIBUTES.length) return;
+
+        scoresArray.forEach((val, index) => {
+            // Find the radio button with this value for this row
+            const radio = document.querySelector(`input[name="attr-score-${index}"][value="${val}"]`);
+            if (radio) radio.checked = true;
+        });
+    }
+
     static handleAutoPopulation(name) {
         if (!name) {
             // Disable all radios if name is empty
@@ -184,19 +197,12 @@ export class ReportsPage {
         
         if (existingReport) {
             // Load Scores
-            existingReport.scores.forEach((val, idx) => {
-                const radio = document.querySelector(`input[name="attr-score-${idx}"][value="${val}"]`);
-                if (radio) radio.checked = true;
-            });
+            this.setFormScores(existingReport.scores)
         } else {
             // Set Defaults (Only if form is clean)
             const isDirty = document.querySelector('#report-attributes-container input[type="radio"]:checked');
             if (!isDirty) {
-                const defaultVal = 3; // 'C'
-                for (let i = 0; i < TOTAL_ATTRIBUTES; i++) {
-                    const radio = document.querySelector(`input[name="attr-score-${i}"][value="${defaultVal}"]`);
-                    if (radio) radio.checked = true;
-                }
+                this.setFormScores([3,3,3,3,3,3,3,3,3,3,3,3,3,3])
             }
         }
     }
@@ -209,7 +215,7 @@ export class ReportsPage {
         const scores = Array.from(checkedRadios).map(r => parseInt(r.value, 10));
 
         const isNameValid = ReportValidator.isValidName(name);
-        const isScoresValid = ReportValidator.areScoresValid(scores, TOTAL_ATTRIBUTES);
+        const isScoresValid = ReportValidator.areScoresValid(scores, REPORT_ATTRIBUTES.length);
 
         if (isNameValid && isScoresValid) {
             btn.disabled = false;

@@ -1,0 +1,269 @@
+// js/ui/ReportsPage.js
+import { store } from '../state/Store.js';
+import { Report } from '../models/Report.js';
+import { ReportValidator } from '../services/Validation.js';
+import { CalculatorService } from '../services/Calculator.js';
+import { Sidebar } from './Sidebar.js';
+import { Navigation } from './Navigation.js';
+import { REPORT_ATTRIBUTES, SCORES } from '../Config.js'; // <--- Import Config
+
+export class ReportsPage {
+
+    static init() {
+        // 1. Build the Form HTML immediately
+        this.initReportForm();
+
+        // 2. Attach Listeners
+        const nameInput = document.getElementById('rpt-name');
+        if (nameInput) {
+            nameInput.addEventListener('input', (e) => this.handleInput(e));
+        }
+
+        const container = document.getElementById('report-attributes-container');
+        if (container) {
+            container.addEventListener('change', () => this.handleInput());
+        }
+
+        const addBtn = document.getElementById('btn-add-report');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.handleAddReport());
+        }
+
+        const finishBtn = document.getElementById('btn-finish-reports');
+        if (finishBtn) {
+            finishBtn.addEventListener('click', () => Navigation.showResultsPage());
+        }
+    }
+
+    // --- YOUR INIT FUNCTION ---
+    static initReportForm() {
+        const container = document.getElementById('report-attributes-container');
+        if (!container) return; 
+
+        container.innerHTML = ""; 
+
+        REPORT_ATTRIBUTES.forEach((attr, index) => {
+            const groupName = `attr-score-${index}`;
+            
+            // Note: Added SCORES from Config.js here
+            const radiosHtml = SCORES.map(score => `
+                <input type="radio" class="btn-check" name="${groupName}" id="${groupName}-${score.label}" value="${score.val}" autocomplete="off" disabled>
+                <label class="btn btn-outline-secondary btn-sm" for="${groupName}-${score.label}" style="width: 40px;">${score.label}</label>
+            `).join('');
+
+            const rowHtml = `
+                <tr>
+                    <td class="fw-bold text-secondary text-start pe-4 text-nowrap">${attr}</td>
+                    <td class="text-start"> 
+                        <div class="btn-group" role="group">
+                            ${radiosHtml}
+                        </div>
+                    </td>
+                </tr>
+            `;
+            container.innerHTML += rowHtml;
+        });
+    }
+
+    // --- CORE LOGIC: REAL-TIME PROJECTION ---
+
+    /**
+     * Called when the user navigates to this page.
+     * Updates static fields like Rank.
+     */
+    static updateUI() {
+        const profile = store.getActiveProfile();
+        if (profile) {
+            const rankInput = document.getElementById('rpt-rank-display');
+            if (rankInput) rankInput.value = profile.rank;
+        }
+    }
+    
+    static handleInput(e) {
+        // A. Scrape the form
+        const formReport = this.getFormReport();
+        const nameInput = document.getElementById('rpt-name');
+        const currentName = nameInput.value.trim();
+
+        // B. Handle Auto-population (Only on name input events)
+        if (e && e.target.id === 'rpt-name') {
+            this.handleAutoPopulation(currentName);
+        }
+
+        // C. Update Button State (Lock/Unlock)
+        this.updateAddButtonState(currentName);
+
+        // D. PROJECTION ENGINE
+        // If form is empty/invalid, revert sidebar to "Saved State"
+        if (!formReport) {
+            Sidebar.updateProfileStats(store.getActiveProfile());
+            Sidebar.updateActiveReport(null);
+            return;
+        }
+
+        // If form has data, calculate "Projected State"
+        // 1. Get current saved reports
+        let projectedList = store.getReports(); 
+        
+        // 2. Inject form data (Edit vs New logic)
+        const existingIndex = projectedList.findIndex(r => r.name.toLowerCase() === formReport.name.toLowerCase());
+        if (existingIndex !== -1) {
+            projectedList[existingIndex] = formReport; // Simulate Edit
+        } else {
+            projectedList.push(formReport); // Simulate Add
+        }
+
+        // 3. Run Math on Projected List
+        const projectedProfile = CalculatorService.calculateStats(store.getOriginalProfile(), projectedList);
+
+        // 4. Update Sidebar with Projection (Visual Only - No Save)
+        Sidebar.updateProfileStats(projectedProfile);
+        Sidebar.updateActiveReport(formReport, store.getActiveProfile().rank);
+    }
+
+    // --- CORE LOGIC: COMMIT (SAVE) ---
+
+    static handleAddReport() {
+        const formReport = this.getFormReport();
+        if (!formReport) return;
+
+        // 1. Save to Store (Upsert)
+        store.upsertReport(formReport);
+
+        // 2. Calculate Final Real Stats
+        const finalProfile = CalculatorService.calculateStats(store.getOriginalProfile(), store.getReports());
+        
+        // 3. Update Store with new Stats
+        store.updateActiveProfile(finalProfile);
+
+        // 4. Refresh All UI Components (Sidebar + Main Ledger)
+        Sidebar.refreshAll(
+            finalProfile, 
+            null, // Clear active report card
+            store.getReports(), 
+            store.getOriginalProfile()
+        );
+        this.updateMainLedger(); // Update the big table
+
+        // 5. Reset Form
+        this.resetForm();
+    }
+
+    // --- HELPERS ---
+
+    static getFormReport() {
+        const nameInput = document.getElementById('rpt-name');
+        const name = nameInput.value.trim();
+        
+        // Return null if name invalid (prevents projection on empty forms)
+        if (!ReportValidator.isValidName(name)) return null;
+
+        const checkedRadios = document.querySelectorAll('#report-attributes-container input[type="radio"]:checked');
+        const scores = Array.from(checkedRadios).map(r => parseInt(r.value, 10));
+
+        // Note: We return the report even if scores are incomplete 
+        // to allow the calculator to show "partial" averages while typing
+        return new Report(name, store.getActiveProfile().rank, scores);
+    }
+
+    static handleAutoPopulation(name) {
+        if (!name) {
+            // Disable all radios if name is empty
+            document.querySelectorAll('input[type="radio"]').forEach(r => {
+                r.disabled = true;
+                r.checked = false;
+            });
+            return;
+        }
+
+        // Unlock radios
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = false);
+
+        // Check Store for existing name
+        const existingReport = store.getReports().find(r => r.name.toLowerCase() === name.toLowerCase());
+        
+        if (existingReport) {
+            // Load Scores
+            existingReport.scores.forEach((val, idx) => {
+                const radio = document.querySelector(`input[name="attr-score-${idx}"][value="${val}"]`);
+                if (radio) radio.checked = true;
+            });
+        } else {
+            // Set Defaults (Only if form is clean)
+            const isDirty = document.querySelector('#report-attributes-container input[type="radio"]:checked');
+            if (!isDirty) {
+                const defaultVal = 3; // 'C'
+                for (let i = 0; i < TOTAL_ATTRIBUTES; i++) {
+                    const radio = document.querySelector(`input[name="attr-score-${i}"][value="${defaultVal}"]`);
+                    if (radio) radio.checked = true;
+                }
+            }
+        }
+    }
+
+    static updateAddButtonState(name) {
+        const btn = document.getElementById('btn-add-report');
+        
+        // Scrape Scores
+        const checkedRadios = document.querySelectorAll('#report-attributes-container input[type="radio"]:checked');
+        const scores = Array.from(checkedRadios).map(r => parseInt(r.value, 10));
+
+        const isNameValid = ReportValidator.isValidName(name);
+        const isScoresValid = ReportValidator.areScoresValid(scores, TOTAL_ATTRIBUTES);
+
+        if (isNameValid && isScoresValid) {
+            btn.disabled = false;
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
+        } else {
+            btn.disabled = true;
+            btn.classList.add('btn-secondary');
+            btn.classList.remove('btn-primary');
+        }
+    }
+
+    static updateMainLedger() {
+        const tbody = document.getElementById('main-reports-list');
+        const finishBtn = document.getElementById('btn-finish-reports');
+        if (!tbody) return;
+
+        tbody.innerHTML = "";
+        const reports = store.getReports();
+
+        if (reports.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-muted fst-italic py-3">No reports added yet.</td></tr>`;
+            if (finishBtn) finishBtn.disabled = true;
+            return;
+        }
+
+        if (finishBtn) finishBtn.disabled = false;
+
+        // Ledger Math
+        const base = store.getOriginalProfile();
+        let runningScore = base.baseAvg * base.baseReportsCount;
+        let runningCount = base.baseReportsCount;
+
+        reports.forEach(report => {
+            runningScore += report.average;
+            runningCount++;
+            const cumAvg = runningScore / runningCount;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-start ps-3 fw-bold">${report.name}</td>
+                <td class="text-primary">${report.average.toFixed(2)}</td>
+                <td class="text-muted">-</td>
+                <td class="fw-bold">${cumAvg.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    static resetForm() {
+        const nameInput = document.getElementById('rpt-name');
+        nameInput.value = "";
+        nameInput.dispatchEvent(new Event('input')); // Trigger locks
+        
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    }
+}

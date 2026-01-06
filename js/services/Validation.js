@@ -1,12 +1,12 @@
-// js/Validation.js
+// js/services/Validation.js
 
 export class ProfileValidator {
     
-    static validate(profile) {
+    static validate(rank, avg, reports, high, low) {
         const errors = [];
 
         // 1. Rank Check
-        if (!profile.rank || profile.rank === "") {
+        if (!rank || rank === "") {
             errors.push("Rank is required.");
         }
 
@@ -14,12 +14,12 @@ export class ProfileValidator {
         // Helper function to check ranges
         const isValidScore = (num) => !isNaN(num) && num >= 0 && num <= 7;
 
-        if (!isValidScore(profile.high)) errors.push("RS High must be between 0.00 and 7.00");
-        if (!isValidScore(profile.avg)) errors.push("RS Avg must be between 0.00 and 7.00");
-        if (!isValidScore(profile.low)) errors.push("RS Low must be between 0.00 and 7.00");
+        if (!isValidScore(high)) errors.push("RS High must be between 0.00 and 7.00");
+        if (!isValidScore(avg)) errors.push("RS Avg must be between 0.00 and 7.00");
+        if (!isValidScore(low)) errors.push("RS Low must be between 0.00 and 7.00");
 
         // 3. Report Count Check (Integer 0-500)
-        if (isNaN(profile.reports) || profile.reports < 0 || profile.reports > 500) {
+        if (isNaN(reports) || reports < 0 || reports > 500) {
             errors.push("Total Reports must be a number between 0 and 500");
         }
 

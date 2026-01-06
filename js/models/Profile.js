@@ -1,6 +1,6 @@
-// js/Profile.js
+// js/models/Profile.js
 
-export class UserProfile {
+export class RankProfile {
     constructor(rank, high, avg, low, reportCount) {
         this.rank = rank;
         // Convert strings to floats/ints immediately upon creation
@@ -11,7 +11,7 @@ export class UserProfile {
     }
 
     clone() {
-        return new UserProfile(
+        return new RankProfile(
             this.rank,
             this.high,
             this.avg,

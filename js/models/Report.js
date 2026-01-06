@@ -1,4 +1,4 @@
-// js/Report.js
+// js/models/Report.js
 
 export class Report {
     /**

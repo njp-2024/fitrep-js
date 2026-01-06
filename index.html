@@ -12,7 +12,7 @@
 <body class="bg-light">
 
     <header class="card p-4 shadow-sm mb-4 text-center">
-            <h1 class="display-5">USMC FitRep Calculator</h1>
+            <h1 class="display-5">FitRep Calculator</h1>
             <p class="lead text-muted">See projected Relative Values for FitReps before submitting. Generate accurate Section I comments quickly and easily.</p>
     </header>
 
@@ -20,7 +20,7 @@
         <div class="row min-vh-100"> 
             <nav class="col-md-4 col-lg-3 d-md-block bg-dark text-white sidebar collapse p-3" style="min-height: 100vh;">
     
-                <h4 class="text-center my-3" id="sb_title"></h4>
+                <h4 class="text-center my-3" id="sb-title"></h4>
                 <hr class="border-light">
 
                 <h6 class="text-uppercase text-white small fw-bold">Profile Stats</h6>
@@ -193,32 +193,19 @@
                             Next: Narratives &rarr;
                         </button>
                     </div>
-
-                    <div class="mt-5">
-                        <h5>Report History</h5>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered text-center align-middle">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Avg</th>
-                                        <th>Proc</th>
-                                        <th>Cum</th>
-                                        </tr>
-                                </thead>
-                                <tbody id="main-reports-list">
-                                    <tr>
-                                        <td colspan="5" class="text-muted fst-italic py-3">No reports added to this profile yet.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>                      
-                    </div>
                 </div>
 
                 <div id="page-narratives" class="d-none">
-                    <h2>Step 3: Narratives</h2>
-                    <p>Narrative generation will go here...</p>
+                    <div class="container mt-5 text-center">
+                        <h2>Narrative Generation</h2>
+                        <p class="text-muted">This module is under construction.</p>
+                        
+                        <div class="mt-4">
+                            <button id="btn-back-to-reports" class="btn btn-outline-secondary">
+                                &larr; Back to Reports
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
             </main>

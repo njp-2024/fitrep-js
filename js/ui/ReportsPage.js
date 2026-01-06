@@ -12,11 +12,13 @@ export class ReportsPage {
     static init() {
         // 1. Build the Form HTML immediately
         this.initReportForm();
+        this.updateUI()
 
         // 2. Attach Listeners
         const nameInput = document.getElementById('rpt-name');
         if (nameInput) {
-            nameInput.addEventListener('input', (e) => this.handleInput(e));
+            //nameInput.addEventListener('input', (e) => this.handleInput(e));
+            nameInput.addEventListener('blur', (e) => this.handleNameBlur(e))
         }
 
         const container = document.getElementById('report-attributes-container');
@@ -31,11 +33,10 @@ export class ReportsPage {
 
         const finishBtn = document.getElementById('btn-finish-reports');
         if (finishBtn) {
-            finishBtn.addEventListener('click', () => Navigation.showResultsPage());
+            finishBtn.addEventListener('click', () => Navigation.showNarrativesPage());
         }
     }
 
-    // --- YOUR INIT FUNCTION ---
     static initReportForm() {
         const container = document.getElementById('report-attributes-container');
         if (!container) return; 
@@ -65,19 +66,9 @@ export class ReportsPage {
         });
     }
 
-    // --- CORE LOGIC: REAL-TIME PROJECTION ---
-
-    /**
-     * Called when the user navigates to this page.
-     * Updates static fields like Rank.
-     */
-    static updateUI() {
-        const profile = store.getActiveProfile();
-        if (profile) {
-            const rankInput = document.getElementById('rpt-rank-display');
-            if (rankInput) rankInput.value = profile.rank;
-        }
-    }
+    //////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////// Handlers //////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////
     
     static handleInput(e) {
         // A. Scrape the form
@@ -86,9 +77,9 @@ export class ReportsPage {
         const currentName = nameInput.value.trim();
 
         // B. Handle Auto-population (Only on name input events)
-        if (e && e.target.id === 'rpt-name') {
-            this.handleAutoPopulation(currentName);
-        }
+        //if (e && e.target.id === 'rpt-name') {
+        //    this.handleAutoPopulation(currentName);
+        //}
 
         // C. Update Button State (Lock/Unlock)
         this.updateAddButtonState(currentName);
@@ -96,6 +87,7 @@ export class ReportsPage {
         // D. PROJECTION ENGINE
         // If form is empty/invalid, revert sidebar to "Saved State"
         if (!formReport) {
+            const projectedProfile = CalculatorService.calculateStats(store.getOriginalProfile(), store.getReports());
             Sidebar.updateProfileStats(store.getOriginalProfile(), store.getActiveProfile());
             Sidebar.updateActiveReport(null);
             Sidebar.updateHistory(store.getReports())
@@ -121,9 +113,26 @@ export class ReportsPage {
         Sidebar.updateProfileStats(store.getOriginalProfile(), projectedProfile);
         Sidebar.updateActiveReport(formReport, store.getActiveProfile().rank);
         Sidebar.updateHistory(projectedList)
+
+        // update narratives button
+        this.updateFinishBtn() 
+
     }
 
-    // --- CORE LOGIC: COMMIT (SAVE) ---
+    static handleNameBlur(e) {
+        const currentName = e.target.value.trim();
+        console.log(`Blur detected. Finalizing name: '${currentName}'`);
+
+        // Run the Auto-Populate Logic now
+        this.handleAutoPopulation(currentName);
+
+        // Re-check the button state (in case defaults were just loaded)
+        //this.updateAddButtonState(currentName);
+        
+        // Optional: Re-run projection to ensure stats are perfectly synced
+        this.handleInput(); 
+    }
+
 
     static handleAddReport() {
         const formReport = this.getFormReport();
@@ -145,13 +154,64 @@ export class ReportsPage {
             store.getReports(), 
             store.getOriginalProfile()
         );
-        this.updateMainLedger(); // Update the big table
 
+        this.updateFinishBtn() 
         // 5. Reset Form
         this.resetForm();
     }
 
-    // --- HELPERS ---
+    static handleAutoPopulation(name) {
+        if (!name) {
+            // Disable all radios if name is empty
+            document.querySelectorAll('input[type="radio"]').forEach(r => {
+                r.disabled = true;
+                r.checked = false;
+            });
+            return;
+        }
+
+        // Unlock radios
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = false);
+
+        // Check Store for existing name
+        const existingReport = store.getReports().find(r => r.name.toLowerCase() === name.toLowerCase());
+        
+        if (existingReport) {
+            // Load Scores
+            this.setFormScores(existingReport.scores)
+        } else {
+            this.setFormScores([3,3,3,3,3,3,3,3,3,3,3,3,3,3])
+            // Set Defaults (Only if form is clean)
+            //const isDirty = document.querySelector('#report-attributes-container input[type="radio"]:checked');
+            //if (!isDirty) {
+            //    this.setFormScores([3,3,3,3,3,3,3,3,3,3,3,3,3,3])
+            //}
+        }
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////// Helpers //////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////
+
+    static updateFinishBtn() {
+        const finishBtn = document.getElementById('btn-finish-reports');
+        finishBtn.disabled = false
+        if (store.getReports().length === 0) finishBtn.disabled = true
+    }
+
+
+    /**
+     * Called when the user navigates to this page.
+     * Updates static fields like Rank.
+     */
+    static updateUI() {
+        const profile = store.getActiveProfile();
+        if (profile) {
+            const rankInput = document.getElementById('rpt-rank-display');
+            if (rankInput) rankInput.value = profile.rank;
+        }
+    }
 
     static getFormReport() {
         const nameInput = document.getElementById('rpt-name');
@@ -179,34 +239,6 @@ export class ReportsPage {
         });
     }
 
-    static handleAutoPopulation(name) {
-        if (!name) {
-            // Disable all radios if name is empty
-            document.querySelectorAll('input[type="radio"]').forEach(r => {
-                r.disabled = true;
-                r.checked = false;
-            });
-            return;
-        }
-
-        // Unlock radios
-        document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = false);
-
-        // Check Store for existing name
-        const existingReport = store.getReports().find(r => r.name.toLowerCase() === name.toLowerCase());
-        
-        if (existingReport) {
-            // Load Scores
-            this.setFormScores(existingReport.scores)
-        } else {
-            // Set Defaults (Only if form is clean)
-            const isDirty = document.querySelector('#report-attributes-container input[type="radio"]:checked');
-            if (!isDirty) {
-                this.setFormScores([3,3,3,3,3,3,3,3,3,3,3,3,3,3])
-            }
-        }
-    }
-
     static updateAddButtonState(name) {
         const btn = document.getElementById('btn-add-report');
         
@@ -228,43 +260,7 @@ export class ReportsPage {
         }
     }
 
-    static updateMainLedger() {
-        const tbody = document.getElementById('main-reports-list');
-        const finishBtn = document.getElementById('btn-finish-reports');
-        if (!tbody) return;
-
-        tbody.innerHTML = "";
-        const reports = store.getReports();
-
-        if (reports.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-muted fst-italic py-3">No reports added yet.</td></tr>`;
-            if (finishBtn) finishBtn.disabled = true;
-            return;
-        }
-
-        if (finishBtn) finishBtn.disabled = false;
-
-        // Ledger Math
-        const base = store.getOriginalProfile();
-        let runningScore = base.baseAvg * base.baseReportsCount;
-        let runningCount = base.baseReportsCount;
-
-        reports.forEach(report => {
-            runningScore += report.average;
-            runningCount++;
-            const cumAvg = runningScore / runningCount;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="text-start ps-3 fw-bold">${report.name}</td>
-                <td class="text-primary">${report.average.toFixed(2)}</td>
-                <td class="text-muted">-</td>
-                <td class="fw-bold">${cumAvg.toFixed(2)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
+    
     static resetForm() {
         const nameInput = document.getElementById('rpt-name');
         nameInput.value = "";

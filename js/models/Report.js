@@ -10,6 +10,9 @@ export class Report {
         this.name = name;
         this.rank = rank;
         this.scores = scores; 
+
+        this.rv_proc = 0.00;
+        this.rv_cum = 0.00;
     }
 
     /**

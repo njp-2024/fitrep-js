@@ -1,6 +1,7 @@
 // js/app.js
 import { ProfilePage } from './ui/ProfilePage.js';
 import { ReportsPage } from './ui/ReportsPage.js';
+import { NarrativesPage } from './ui/NarrativesPage.js';
 
 // Constant needed for UI generation (if you generate the radios dynamically)
 // If your HTML already has the radios hardcoded, you don't need this here.
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Page Controllers
     ProfilePage.init();
     ReportsPage.init();
+    NarrativesPage.init();
 
     // Check if we need to generate the radio button grid?
     // If you were generating the HTML for the 14 attributes via JS,

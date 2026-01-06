@@ -2,6 +2,7 @@
 
 import { ReportsPage } from './ReportsPage.js';
 
+
 export class Navigation {
     
     static showReportsPage() {
@@ -23,12 +24,17 @@ export class Navigation {
         window.scrollTo(0, 0);
     }
 
-    static showResultsPage() {
-        // Hide Reports
-        document.getElementById('page-reports').classList.add('d-none');
 
-        // Show Results (We will build this view later)
-        const resultsSection = document.getElementById('results-section');
-        if (resultsSection) resultsSection.classList.remove('d-none');
+    static showNarrativesPage() {
+        // Hide others
+        document.getElementById('page-profile').classList.add('d-none');
+        document.getElementById('page-reports').classList.add('d-none');
+        
+        // Show Narratives
+        const navSection = document.getElementById('page-narratives');
+        if (navSection) {
+            navSection.classList.remove('d-none');
+        }
+        window.scrollTo(0, 0);
     }
 }

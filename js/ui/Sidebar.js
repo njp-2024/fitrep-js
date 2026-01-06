@@ -4,6 +4,14 @@ import { RankProfile } from "../models/Profile.js";
 
 export class Sidebar {
     
+    static updateProfileTitle(rank) {
+        const titleEl = document.getElementById('sb-title');
+        if (titleEl) {
+            titleEl.textContent = `${rank} Profile`;
+        }
+    }
+
+
     /**
      * Updates the Top Card (Profile Stats)
      * @param {RankProfile} profile - The profile object (Real or Projected)
@@ -65,8 +73,8 @@ export class Sidebar {
         if (avgEl) avgEl.textContent = report.average.toFixed(2);
         
         // Placeholders for RV (Future Logic)
-        if (rvProcEl) rvProcEl.textContent = "-";
-        if (rvCumEl) rvCumEl.textContent = "-";
+        if (rvProcEl) rvProcEl.textContent = report.rv_proc.toFixed(2);
+        if (rvCumEl) rvCumEl.textContent = report.rv_cum.toFixed(2);
     }
 
     /**
@@ -92,7 +100,8 @@ export class Sidebar {
                         ${rpt.name}
                     </td>
                     <td class="text-primary">${rpt.average.toFixed(2)}</td>
-                    <td class="fw-bold">5</td>
+                    <td class="fw-bold">${rpt.rv_proc.toFixed(2)}</td>
+                    <td class="fw-bold">${rpt.rv_cum.toFixed(2)}</td>
                 </tr>
             `;
             tbody.innerHTML += row;
@@ -103,6 +112,7 @@ export class Sidebar {
      * Convenience method to update all three sections at once
      */
     static refreshAll(activeProfile, formReport, reportsList, baseProfile) {
+        this.updateProfileTitle(activeProfile.rank)
         this.updateProfileStats(baseProfile, activeProfile);
         this.updateActiveReport(formReport, activeProfile ? activeProfile.rank : "");
         // Note: We usually only update history with the SAVED list, not projected

@@ -4,10 +4,10 @@ export class RankProfile {
     constructor(rank, high, low, avg, reportCount) {
         this.rank = rank;
         // Convert strings to floats/ints immediately upon creation
-        this.high = parseFloat(high);
-        this.avg = parseFloat(avg);
-        this.low = parseFloat(low);
-        this.reports = parseInt(reportCount, 10);
+        this.high = high  // parseFloat(high);
+        this.avg = avg    // parseFloat(avg);
+        this.low = low    // parseFloat(low);
+        this.reports = reportCount  // parseInt(reportCount, 10);
     }
 
     clone() {

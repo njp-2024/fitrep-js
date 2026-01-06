@@ -2,6 +2,7 @@
 import { store } from '../state/Store.js';
 import { RankProfile } from '../models/Profile.js';
 import { ProfileValidator } from '../services/Validation.js';
+import { PrecisionService } from '../services/PrecisionService.js';
 import { Sidebar } from './Sidebar.js';
 import { Navigation } from './Navigation.js';
 import { RANKS } from '../Config.js'; // <--- Import Ranks
@@ -43,8 +44,15 @@ export class ProfilePage {
             return;
         }
 
-        const profile = new RankProfile(rank, high, low, avg, reports);
+        // parse to numbers
+        const preciseHigh = PrecisionService.getPrecise(high);
+        const preciseLow = PrecisionService.getPrecise(low);
+        const finalAvg = parseFloat(avg)
+        const finalReports = parseInt(reports, 10)
+
+        const profile = new RankProfile(rank, preciseHigh, preciseLow, finalAvg, finalReports);
         store.initProfile(profile);
+        Sidebar.updateProfileTitle(rank)
         Sidebar.updateProfileStats(store.getOriginalProfile(), store.getActiveProfile());
         Sidebar.updateHistory([], store.getOriginalProfile());
         Navigation.showReportsPage();

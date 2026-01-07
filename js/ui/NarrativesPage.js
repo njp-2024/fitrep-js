@@ -4,6 +4,9 @@ import { Navigation } from './Navigation.js';
 import { SCORES, REPORT_ATTRIBUTES } from '../Config.js'; // Ensure SCORES is exported in Config.js
 import { Sidebar } from './Sidebar.js';
 import { ManualGenerator } from '../services/ManualGenerator.js';
+import { PromptBuilder } from '../services/PromptBuilder.js';
+import { ExportService } from '../services/ExportService.js';
+import { AI_CONFIG } from '../config/AIConfig.js';
 
 export class NarrativesPage {
 
@@ -55,6 +58,47 @@ export class NarrativesPage {
         const revertBtn = document.getElementById('btn-revert-inputs');
         if (revertBtn) {
             revertBtn.addEventListener('click', () => this.handleRevert());
+        }
+
+        // --- EXPORT BUTTON ---
+        const exportBtn = document.getElementById('nav-btn-export');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                // 1. Generate Text
+                const summaryText = ExportService.generateSessionSummary();
+                
+                // 2. Put it in the Modal
+                const previewBox = document.getElementById('export-preview');
+                if (previewBox) previewBox.value = summaryText;
+
+                // 3. Show Modal (using Bootstrap API)
+                const modalEl = document.getElementById('exportModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            });
+        }
+
+        // --- MODAL ACTION BUTTONS ---
+        const copyBtn = document.getElementById('btn-copy-clipboard');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                const text = document.getElementById('export-preview').value;
+                navigator.clipboard.writeText(text).then(() => {
+                    // Quick Feedback
+                    const original = copyBtn.innerHTML;
+                    copyBtn.innerHTML = `<i class="bi bi-check"></i> Copied!`;
+                    setTimeout(() => copyBtn.innerHTML = original, 2000);
+                });
+            });
+        }
+
+        const downloadBtn = document.getElementById('btn-download-txt');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                const text = document.getElementById('export-preview').value;
+                const filename = `FitRep_Session_${new Date().toISOString().slice(0,10)}.txt`;
+                ExportService.downloadTextFile(filename, text);
+            });
         }
     }
 
@@ -124,6 +168,15 @@ export class NarrativesPage {
             manualRadio.checked = true;
         }
 
+        // NEW: Update the counter for the currently selected report
+        if (selectEl && selectEl.value !== "") {
+            const index = parseInt(selectEl.value, 10);
+            const report = store.getReports()[index];
+            this.updateUsageLabel(report); // Call the helper
+        } else {
+            this.updateUsageLabel(null); // Reset to 0/3
+        }
+
         // Force validation check (which will disable the button since length is 0)
         this.handleValidation();
     }
@@ -155,6 +208,8 @@ export class NarrativesPage {
         
         // 3. NEW: LOAD SAVED NARRATIVE (Result)
         document.getElementById('nar-output').value = report.generatedNarrative || "";
+
+        this.updateUsageLabel(report)
 
         // NEW: Load Timestamp
         const timeLabel = document.getElementById('nar-last-saved');
@@ -304,9 +359,27 @@ export class NarrativesPage {
         const report = store.getReports()[index];
         if (!report) return;
 
-        // 1. Generate Text using the Service
-        // We pass the whole report object
-        const finalText = ManualGenerator.generate(report);
+        const modeEl = document.querySelector('input[name="nar-method"]:checked');
+        const mode = modeEl ? modeEl.value : 'manual';
+        
+        let finalText = "";
+
+        if (mode === 'manual') {
+            finalText = ManualGenerator.generate(report);
+        } else if (mode === 'ai') {
+            const max = AI_CONFIG.MAX_GENERATIONS_PER_REPORT;
+            if (report.narrativeAICount >= max) {
+                alert(`AI Generation Limit Reached.\n\nYou have used ${report.narrativeAICount}/${max} AI attempts for this specific report.\n\nPlease edit the text manually or reset the report to try again.`);
+                return; // STOP HERE
+            }
+
+            // This puts the raw prompt in the box so you can verify the "Dynamic Few-Shot" logic
+            finalText = PromptBuilder.build(report);
+            report.narrativeAICount ++
+            console.log(`AI Gen Count for ${report.name}: ${report.narrativeAICount}/${max}`);
+            //store.upsertReport(report)
+            
+        }
 
         // 2. Output to UI
         const outputBox = document.getElementById('nar-output');
@@ -318,5 +391,21 @@ export class NarrativesPage {
         report.lastSavedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const timeLabel = document.getElementById('nar-last-saved');
         if (timeLabel) timeLabel.textContent = `Last saved: ${report.lastSavedTime}`;
+        // You might want to update a label showing "Uses: 1/3"
+        this.updateUsageLabel(report);
+    }
+
+    // Helper to show the count on screen
+    static updateUsageLabel(report) {
+        const label = document.getElementById('ai-usage-counter');
+        // Check if report exists and has a count, otherwise 0
+        const count = report ? (report.narrativeAICount || 0) : 0;
+        const max = AI_CONFIG.MAX_GENERATIONS_PER_REPORT;
+        
+        if (label) {
+            label.textContent = `AI Uses: ${count} / ${max}`;
+            // Visual cue: Turn red if maxed out
+            label.style.color = count >= max ? 'red' : 'inherit';
+        }
     }
 }

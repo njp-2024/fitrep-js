@@ -19,7 +19,7 @@ export class Report {
         this.inputsSavedTime = null
 
         this.generatedNarrative = ""
-        this.narrativeCount = 0
+        this.narrativeAICount = 0
         this.narrativeSavedTime = null
     }
 

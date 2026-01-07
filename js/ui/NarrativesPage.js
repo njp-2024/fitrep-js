@@ -3,6 +3,7 @@ import { store } from '../state/Store.js';
 import { Navigation } from './Navigation.js';
 import { SCORES, REPORT_ATTRIBUTES } from '../Config.js'; // Ensure SCORES is exported in Config.js
 import { Sidebar } from './Sidebar.js';
+import { ManualGenerator } from '../services/ManualGenerator.js';
 
 export class NarrativesPage {
 
@@ -37,15 +38,23 @@ export class NarrativesPage {
         }
 
         
+        // --- NEW: Save Inputs Button ---
+        const saveInputsBtn = document.getElementById('btn-save-inputs');
+        if (saveInputsBtn) {
+            saveInputsBtn.addEventListener('click', () => this.saveCurrentInputs(saveInputsBtn));
+        }
 
 
         // 4. save narrative
         const saveNarBtn = document.getElementById('btn-save-nar');
         if (saveNarBtn) {
-            saveNarBtn.addEventListener('click', () => {
-                console.log("Save Narrative clicked (Logic pending)");
-                // We will implement the save logic next
-            });
+            saveNarBtn.addEventListener('click', () => this.saveCurrentInputs(saveNarBtn));
+        }
+
+        // NEW: Revert Button
+        const revertBtn = document.getElementById('btn-revert-inputs');
+        if (revertBtn) {
+            revertBtn.addEventListener('click', () => this.handleRevert());
         }
     }
 
@@ -104,6 +113,17 @@ export class NarrativesPage {
         document.getElementById('narrative-stats-display').classList.add('d-none');
         document.getElementById('nar-output').value = "";
 
+        // 3. WIPE ALL INPUTS (The Fix)
+        document.getElementById('nar-user-input').value = "";
+        document.getElementById('nar-context-input').value = "";
+        document.getElementById('nar-output').value = "";
+
+        // 1. Force "Manual" to be selected
+        const manualRadio = document.getElementById('method-manual');
+        if (manualRadio) {
+            manualRadio.checked = true;
+        }
+
         // Force validation check (which will disable the button since length is 0)
         this.handleValidation();
     }
@@ -127,6 +147,88 @@ export class NarrativesPage {
 
         // 3. Populate Attribute Badges
         this.renderAttributeBadges(report.scores);
+
+        // 2. NEW: LOAD SAVED INPUTS
+        // If the report has data, put it in the box. If not, use empty string.
+        document.getElementById('nar-user-input').value = report.accomplishments || "";
+        document.getElementById('nar-context-input').value = report.context || "";
+        
+        // 3. NEW: LOAD SAVED NARRATIVE (Result)
+        document.getElementById('nar-output').value = report.generatedNarrative || "";
+
+        // NEW: Load Timestamp
+        const timeLabel = document.getElementById('nar-last-saved');
+        if (report.lastSavedTime) {
+            timeLabel.textContent = `Last saved: ${report.lastSavedTime}`;
+        } else {
+            timeLabel.textContent = "Not saved yet";
+        }
+    }
+
+    /**
+     * Writes the current UI values back to the Report object and localStorage.
+     * @param {HTMLElement} btn - Optional button to flash "Saved!" text on.
+     */
+    static saveCurrentInputs(btn = null) {
+        const selectEl = document.getElementById('narrative-report-select');
+        if (!selectEl || selectEl.value === "") return; // No report selected
+
+        const index = parseInt(selectEl.value, 10);
+        const report = store.getReports()[index];
+
+        if (report) {
+            // 1. Update the Object
+            report.accomplishments = document.getElementById('nar-user-input').value;
+            report.context = document.getElementById('nar-context-input').value;
+            report.generatedNarrative = document.getElementById('nar-output').value;
+
+
+            // NEW: Set Timestamp
+            const now = new Date();
+            report.lastSavedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+
+            // 2. Persist to Browser Memory - not implemented, can add this to save data in browsers local memory
+            //store.saveToLocalStorage();
+            console.log(`Saved inputs for report: ${report.name}`);
+
+            // 3. UI Feedback (Flash the button)
+            // Update the text label immediately
+            const timeLabel = document.getElementById('nar-last-saved');
+            if (timeLabel) timeLabel.textContent = `Last saved: ${report.lastSavedTime}`;
+
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<i class="bi bi-check-lg"></i> Saved!`;
+                btn.classList.remove('btn-outline-secondary', 'btn-outline-dark');
+                btn.classList.add('btn-success', 'text-white');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('btn-success', 'text-white');
+                    // Restore original class based on which button it was
+                    if (btn.id === 'btn-save-inputs') btn.classList.add('btn-outline-secondary');
+                    if (btn.id === 'btn-save-nar') btn.classList.add('btn-outline-dark');
+                }, 2000);
+            }
+        }
+    }
+
+    /**
+     * Discards current text in the boxes and reloads from the saved Report object.
+     */
+    static handleRevert() {
+        const selectEl = document.getElementById('narrative-report-select');
+        if (!selectEl || selectEl.value === "") return;
+
+        // confirm before destroying work
+        if (!confirm("Discard unsaved changes and reload the last saved version?")) {
+            return;
+        }
+
+        const index = parseInt(selectEl.value, 10);
+        // Reuse handleSelection to reload the data!
+        this.handleSelection(index);
     }
 
 
@@ -195,13 +297,26 @@ export class NarrativesPage {
     }
 
     static handleGenerate() {
-        const output = document.getElementById('nar-output');
-        const userInput = document.getElementById('nar-user-input').value;
-        const avg = document.getElementById('nar-stat-avg').textContent;
+        const selectEl = document.getElementById('narrative-report-select');
+        if (!selectEl || selectEl.value === "") return;
 
-        // Placeholder "Template Engine"
-        const result = `(DRAFT)\n\nReviewing Officer Comments:\n\nMRO is a solid performer with a ${avg} average. ${userInput}\n\nRecommended for promotion.`;
-        
-        output.value = result;
+        const index = parseInt(selectEl.value, 10);
+        const report = store.getReports()[index];
+        if (!report) return;
+
+        // 1. Generate Text using the Service
+        // We pass the whole report object
+        const finalText = ManualGenerator.generate(report);
+
+        // 2. Output to UI
+        const outputBox = document.getElementById('nar-output');
+        outputBox.value = finalText;
+
+        // 3. Auto-Save Logic (Existing)
+        report.generatedNarrative = finalText;
+        const now = new Date();
+        report.lastSavedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeLabel = document.getElementById('nar-last-saved');
+        if (timeLabel) timeLabel.textContent = `Last saved: ${report.lastSavedTime}`;
     }
 }

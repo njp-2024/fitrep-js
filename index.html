@@ -267,10 +267,22 @@
                                             <textarea id="nar-context-input" class="form-control" rows="4" placeholder="e.g. MRO is my #1 choice for command..."></textarea>
                                         </div>
 
-                                        <div class="mt-auto">
-                                            <button id="btn-save-inputs" class="btn btn-outline-secondary w-100">
-                                                <i class="bi bi-save"></i> Save Inputs
-                                            </button>
+                                        <div class="mt-auto pt-3 border-top">
+                                            <div class="d-flex gap-2">
+                                                <button id="btn-revert-inputs" class="btn btn-outline-danger w-50" title="Discard changes and reload saved text">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Revert
+                                                </button>
+                                                
+                                                <button id="btn-save-inputs" class="btn btn-outline-secondary w-50">
+                                                    <i class="bi bi-save"></i> Save Inputs
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="text-end mt-1">
+                                                <small id="nar-last-saved" class="text-muted fst-italic" style="font-size: 0.75rem;">
+                                                    Not saved yet
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

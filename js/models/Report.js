@@ -13,6 +13,11 @@ export class Report {
 
         this.rv_proc = 0.00;
         this.rv_cum = 0.00;
+
+        this.accomplishments = ""
+        this.context = ""
+        this.generatedNarrative = ""
+        this.narrativeCount = 0
     }
 
     /**

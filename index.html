@@ -18,8 +18,7 @@
 
     <div class="container-fluid">
         <div class="row min-vh-100"> 
-            <nav class="col-md-4 col-lg-3 d-md-block bg-dark text-white sidebar collapse p-3" style="min-height: 100vh;">
-    
+            <nav class="col-md-4 col-lg-3 d-md-block bg-dark text-white sidebar collapse p-3 sticky-top" style="height: 100vh; overflow-y: auto;">
                 <h4 class="text-center my-3" id="sb-title"></h4>
                 <hr class="border-light">
 
@@ -152,9 +151,11 @@
 
                 <div id="page-reports" class="d-none">
     
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h2>Step 2: Add Report</h2>
-                        
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Step 2: Add Report(s)</h2>
+                        <button id="btn-reset-profile" class="btn btn-outline-secondary btn-sm">
+                            &larr; Reset Profile
+                        </button>
                     </div>
 
                     <div class="card p-4 shadow-sm border-secondary">
@@ -195,16 +196,125 @@
                     </div>
                 </div>
 
+
                 <div id="page-narratives" class="d-none">
-                    <div class="container mt-5 text-center">
-                        <h2>Narrative Generation</h2>
-                        <p class="text-muted">This module is under construction.</p>
-                        
-                        <div class="mt-4">
-                            <button id="btn-back-to-reports" class="btn btn-outline-secondary">
+                    <div class="container mt-4">
+        
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>Step 3: Narrative Generator</h2>
+                            <button id="btn-back-to-reports" class="btn btn-outline-secondary btn-sm">
                                 &larr; Back to Reports
                             </button>
                         </div>
+
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="narrative-report-select" class="form-label fw-bold">Select Report to Process</label>
+                                    <select id="narrative-report-select" class="form-select form-select-lg">
+                                        <option value="" selected disabled>Choose a report...</option>
+                                    </select>
+                                </div>
+
+                                <div id="narrative-stats-display" class="d-none">
+                                    <hr>
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 border-end">
+                                            <div class="d-flex justify-content-around text-center">
+                                                <div>
+                                                    <small class="text-muted d-block">AVERAGE</small>
+                                                    <span id="nar-stat-avg" class="fs-4 fw-bold text-primary">--</span>
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted d-block">RV PROC</small>
+                                                    <span id="nar-stat-proc" class="fs-4 fw-bold">--</span>
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted d-block">RV CUM</small>
+                                                    <span id="nar-stat-cum" class="fs-4 fw-bold">--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-8">
+                                            <small class="text-muted d-block mb-1">ATTRIBUTE PROFILE</small>
+                                            <div id="nar-attributes-grid" class="d-flex flex-wrap justify-content-around">
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-light fw-bold">1. Narrative Inputs</div>
+                                    <div class="card-body d-flex flex-column">
+                                        
+                                        <div class="mb-3">
+                                            <label for="nar-user-input" class="form-label small fw-bold">Accomplishments / Bullets</label>
+                                            <textarea id="nar-user-input" class="form-control" rows="8" placeholder="- Led 30 Marines in field op...&#10;- Scored 300 PFT..."></textarea>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between">
+                                            <small id="nar-char-count" class="text-muted" style="font-size: 0.75rem;">0 / 50 characters required</small>
+                                            <small class="text-danger d-none" id="nar-error-msg">Too short</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="nar-context-input" class="form-label small fw-bold">RS Context / Personalization</label>
+                                            <textarea id="nar-context-input" class="form-control" rows="4" placeholder="e.g. MRO is my #1 choice for command..."></textarea>
+                                        </div>
+
+                                        <div class="mt-auto">
+                                            <button id="btn-save-inputs" class="btn btn-outline-secondary w-100">
+                                                <i class="bi bi-save"></i> Save Inputs
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-7">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-light fw-bold">2. Generation & Result</div>
+                                    <div class="card-body d-flex flex-column">
+                                        
+                                        <div class="bg-light p-3 rounded mb-3 border">
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-md-6">
+                                                    <div class="btn-group w-100" role="group">
+                                                        <input type="radio" class="btn-check" name="nar-method" id="method-manual" value="manual" checked>
+                                                        <label class="btn btn-outline-secondary btn-sm" for="method-manual">Manual</label>
+
+                                                        <input type="radio" class="btn-check" name="nar-method" id="method-ai" value="ai" disabled>
+                                                        <label class="btn btn-outline-secondary btn-sm" for="method-ai">AI (Beta)</label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <button id="btn-generate-narrative" class="btn btn-success w-100 btn-sm shadow-sm">
+                                                        <i class="bi bi-stars"></i> Generate
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <label class="form-label small text-muted">Generated Narrative</label>
+                                        <textarea id="nar-output" class="form-control flex-grow-1 bg-white mb-3" style="min-height: 200px; font-family: monospace;"></textarea>
+                                        
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button id="btn-clear-nar" class="btn btn-sm btn-link text-muted text-decoration-none">Clear</button>
+                                            <button id="btn-save-nar" class="btn btn-sm btn-outline-dark">
+                                                <i class="bi bi-save"></i> Save Narrative
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 

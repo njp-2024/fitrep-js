@@ -1,6 +1,7 @@
 // js/ui/Navigation.js
 
 import { ReportsPage } from './ReportsPage.js';
+import { NarrativesPage } from './NarrativesPage.js';
 
 
 export class Navigation {
@@ -8,9 +9,7 @@ export class Navigation {
     static showReportsPage() {
         // Hide Setup
         document.getElementById('page-profile').classList.add('d-none');
-        
-        // Show Reports
-        document.getElementById('page-reports').classList.add('d-none');
+        document.getElementById('page-narratives').classList.add('d-none');;
 
         const reportsSection = document.getElementById('page-reports'); // Matches your new HTML ID
         if (reportsSection) {
@@ -34,7 +33,11 @@ export class Navigation {
         const navSection = document.getElementById('page-narratives');
         if (navSection) {
             navSection.classList.remove('d-none');
+        
+            // ADD THIS LINE:
+            NarrativesPage.updateUI(); 
         }
+
         window.scrollTo(0, 0);
     }
 }

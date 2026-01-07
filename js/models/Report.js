@@ -16,8 +16,11 @@ export class Report {
 
         this.accomplishments = ""
         this.context = ""
+        this.inputsSavedTime = null
+
         this.generatedNarrative = ""
         this.narrativeCount = 0
+        this.narrativeSavedTime = null
     }
 
     /**

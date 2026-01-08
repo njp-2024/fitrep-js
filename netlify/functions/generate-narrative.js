@@ -39,8 +39,6 @@ exports.handler = async function (event, context) {
 
     const openai = new OpenAI({ apiKey });
 
-    console.log(prompt)
-
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // Cost-effective model
       messages: [

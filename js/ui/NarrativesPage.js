@@ -1,7 +1,7 @@
 // js/ui/NarrativesPage.js
 import { store } from '../state/Store.js';
 import { Navigation } from './Navigation.js';
-import { SCORES, REPORT_ATTRIBUTES } from '../Config.js'; // Ensure SCORES is exported in Config.js
+import { SCORES, REPORT_ATTRIBUTES } from '../config/Config.js';
 import { Sidebar } from './Sidebar.js';
 import { ManualGenerator } from '../services/ManualGenerator.js';
 import { PromptBuilder } from '../services/PromptBuilder.js';
@@ -11,106 +11,139 @@ import { CalculatorService } from '../services/Calculator.js';
 
 export class NarrativesPage {
 
-    static init() {        
-        // 1. Navigation Listener
-        const backBtn = document.getElementById('btn-back-to-reports');
-        if (backBtn) {
-            backBtn.addEventListener('click', () => Navigation.showReportsPage());
-        }
+    // ============ PRIVATE HELPERS ============
 
-        // 3. Dropdown Listener (Update: Trigger validation when report changes too)
+    static #bindClick(id, handler) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', handler);
+        return el;
+    }
+
+    static #bindEvent(id, event, handler) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(event, handler);
+        return el;
+    }
+
+    static #getSelectedReport() {
         const selectEl = document.getElementById('narrative-report-select');
-        if (selectEl) {
-            selectEl.addEventListener('change', (e) => {
-                this.handleSelection(e.target.value);
-                this.handleValidation(); // Re-check if we are ready to generate
-            });
-        }
+        if (!selectEl || selectEl.value === "") return null;
+        const index = parseInt(selectEl.value, 10);
+        return store.getReports()[index];
+    }
 
-        // 3. Generate Button Listener
+    static #getSelectedIndex() {
+        const selectEl = document.getElementById('narrative-report-select');
+        if (!selectEl || selectEl.value === "") return -1;
+        return parseInt(selectEl.value, 10);
+    }
+
+    static #updateTimestamp(report, label = 'Last saved') {
+        const now = new Date();
+        report.lastSavedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeLabel = document.getElementById('nar-last-saved');
+        if (timeLabel) timeLabel.textContent = `${label}: ${report.lastSavedTime}`;
+    }
+
+    static #flashButton(btn, originalClass) {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = `<i class="bi bi-check-lg"></i> Saved!`;
+        btn.classList.remove('btn-outline-secondary', 'btn-outline-dark');
+        btn.classList.add('btn-success', 'text-white');
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success', 'text-white');
+            btn.classList.add(originalClass);
+        }, 2000);
+    }
+
+    // ============ INITIALIZATION ============
+
+    static init() {
+        this.#initNavigationListeners();
+        this.#initFormListeners();
+        this.#initActionListeners();
+        this.#initExportListeners();
+        this.#initInitialState();
+    }
+
+    static #initNavigationListeners() {
+        this.#bindClick('btn-back-to-reports', () => Navigation.showReportsPage());
+    }
+
+    static #initFormListeners() {
+        // Dropdown selection
+        this.#bindEvent('narrative-report-select', 'change', (e) => {
+            this.handleSelection(e.target.value);
+            this.handleValidation();
+        });
+
+        // User input validation on keystroke
+        this.#bindEvent('nar-user-input', 'input', () => this.handleValidation());
+    }
+
+    static #initActionListeners() {
+        // Generate narrative
+        this.#bindClick('btn-generate-narrative', () => this.handleGenerate());
+
+        // Save buttons
+        this.#bindClick('btn-save-inputs', () => {
+            const btn = document.getElementById('btn-save-inputs');
+            this.saveCurrentInputs(btn);
+        });
+        this.#bindClick('btn-save-nar', () => {
+            const btn = document.getElementById('btn-save-nar');
+            this.saveCurrentInputs(btn);
+        });
+
+        // Revert and clear
+        this.#bindClick('btn-revert-inputs', () => this.handleRevert());
+        this.#bindClick('btn-clear-nar', () => this.handleClearToSaved());
+    }
+
+    static #initExportListeners() {
+        this.#bindClick('nav-btn-export', () => this.handleExport());
+        this.#bindClick('btn-copy-clipboard', () => this.handleCopyToClipboard());
+        this.#bindClick('btn-download-txt', () => this.handleDownload());
+    }
+
+    static #initInitialState() {
         const genBtn = document.getElementById('btn-generate-narrative');
         if (genBtn) genBtn.disabled = true;
-        if (genBtn) {
-            genBtn.addEventListener('click', () => this.handleGenerate());
-        }
-
-
-        // 2. Input Listener - Run validation on every keystroke
-        const inputEl = document.getElementById('nar-user-input');
-        if (inputEl) {
-            inputEl.addEventListener('input', () => this.handleValidation());
-        }
-
-        
-        // --- NEW: Save Inputs Button ---
-        const saveInputsBtn = document.getElementById('btn-save-inputs');
-        if (saveInputsBtn) {
-            saveInputsBtn.addEventListener('click', () => this.saveCurrentInputs(saveInputsBtn));
-        }
-
-
-        // 4. save narrative
-        const saveNarBtn = document.getElementById('btn-save-nar');
-        if (saveNarBtn) {
-            saveNarBtn.addEventListener('click', () => this.saveCurrentInputs(saveNarBtn));
-        }
-
-        // NEW: Revert Button
-        const revertBtn = document.getElementById('btn-revert-inputs');
-        if (revertBtn) {
-            revertBtn.addEventListener('click', () => this.handleRevert());
-        }
-
-        // --- EXPORT BUTTON ---
-        const exportBtn = document.getElementById('nav-btn-export');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                // 1. Generate Text
-                const summaryText = ExportService.generateSessionSummary();
-                
-                // 2. Put it in the Modal
-                const previewBox = document.getElementById('export-preview');
-                if (previewBox) previewBox.value = summaryText;
-
-                // 3. Show Modal (using Bootstrap API)
-                const modalEl = document.getElementById('exportModal');
-                const modal = new bootstrap.Modal(modalEl);
-                modal.show();
-            });
-        }
-
-        // --- MODAL ACTION BUTTONS ---
-        const copyBtn = document.getElementById('btn-copy-clipboard');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                const text = document.getElementById('export-preview').value;
-                navigator.clipboard.writeText(text).then(() => {
-                    // Quick Feedback
-                    const original = copyBtn.innerHTML;
-                    copyBtn.innerHTML = `<i class="bi bi-check"></i> Copied!`;
-                    setTimeout(() => copyBtn.innerHTML = original, 2000);
-                });
-            });
-        }
-
-        const downloadBtn = document.getElementById('btn-download-txt');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                const text = document.getElementById('export-preview').value;
-                const filename = `FitRep_Session_${new Date().toISOString().slice(0,10)}.txt`;
-                ExportService.downloadTextFile(filename, text);
-            });
-        }
-
-        const clearBtn = document.getElementById('btn-clear-nar'); 
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                this.handleClearToSaved();
-            });
-        }
-
-
     }
+
+    // ============ EXPORT HANDLERS ============
+
+    static handleExport() {
+        const summaryText = ExportService.generateSessionSummary();
+
+        const previewBox = document.getElementById('export-preview');
+        if (previewBox) previewBox.value = summaryText;
+
+        const modalEl = document.getElementById('exportModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    static handleCopyToClipboard() {
+        const text = document.getElementById('export-preview').value;
+        const copyBtn = document.getElementById('btn-copy-clipboard');
+
+        navigator.clipboard.writeText(text).then(() => {
+            const original = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<i class="bi bi-check"></i> Copied!`;
+            setTimeout(() => copyBtn.innerHTML = original, 2000);
+        });
+    }
+
+    static handleDownload() {
+        const text = document.getElementById('export-preview').value;
+        const filename = `FitRep_Session_${new Date().toISOString().slice(0, 10)}.txt`;
+        ExportService.downloadTextFile(filename, text);
+    }
+
+    // ============ FORM HANDLERS ============
 
     /**
      * Checks all conditions required to enable the Generate button.
@@ -163,32 +196,22 @@ export class NarrativesPage {
             selectEl.appendChild(option);
         });
 
-        // Hide the dashboard until selection is made
+        // Hide dashboard and clear all inputs
         document.getElementById('narrative-stats-display').classList.add('d-none');
-        document.getElementById('nar-output').value = "";
-
-        // 3. WIPE ALL INPUTS (The Fix)
         document.getElementById('nar-user-input').value = "";
         document.getElementById('nar-context-input').value = "";
         document.getElementById('nar-output').value = "";
 
-        // 1. Force "Manual" to be selected
+        // Force "Manual" to be selected
         const manualRadio = document.getElementById('method-manual');
         if (manualRadio) {
             manualRadio.checked = true;
         }
 
-        // NEW: Update the counter for the currently selected report
-        if (selectEl && selectEl.value !== "") {
-            const index = parseInt(selectEl.value, 10);
-            const report = store.getReports()[index];
-            this.updateUsageLabel(report); // Call the helper
-        } else {
-            this.updateUsageLabel(null); // Reset to 0/3
-        }
+        // Reset usage counter (no report selected)
+        this.updateUsageLabel(null);
 
-
-        // Force validation check (which will disable the button since length is 0)
+        // Force validation check (will disable button since length is 0)
         this.handleValidation();
     }
 
@@ -236,47 +259,24 @@ export class NarrativesPage {
      * @param {HTMLElement} btn - Optional button to flash "Saved!" text on.
      */
     static saveCurrentInputs(btn = null) {
-        const selectEl = document.getElementById('narrative-report-select');
-        if (!selectEl || selectEl.value === "") return; // No report selected
+        const report = this.#getSelectedReport();
+        if (!report) return;
 
-        const index = parseInt(selectEl.value, 10);
-        const report = store.getReports()[index];
+        // Update report object
+        report.accomplishments = document.getElementById('nar-user-input').value;
+        report.context = document.getElementById('nar-context-input').value;
+        report.generatedNarrative = document.getElementById('nar-output').value;
 
-        if (report) {
-            // 1. Update the Object
-            report.accomplishments = document.getElementById('nar-user-input').value;
-            report.context = document.getElementById('nar-context-input').value;
-            report.generatedNarrative = document.getElementById('nar-output').value;
+        // Update timestamp
+        this.#updateTimestamp(report);
+        console.log(`Saved inputs for report: ${report.name}`);
 
-
-            // NEW: Set Timestamp
-            const now = new Date();
-            report.lastSavedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-
-            // 2. Persist to Browser Memory - not implemented, can add this to save data in browsers local memory
-            //store.saveToLocalStorage();
-            console.log(`Saved inputs for report: ${report.name}`);
-
-            // 3. UI Feedback (Flash the button)
-            // Update the text label immediately
-            const timeLabel = document.getElementById('nar-last-saved');
-            if (timeLabel) timeLabel.textContent = `Last saved: ${report.lastSavedTime}`;
-
-            if (btn) {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = `<i class="bi bi-check-lg"></i> Saved!`;
-                btn.classList.remove('btn-outline-secondary', 'btn-outline-dark');
-                btn.classList.add('btn-success', 'text-white');
-
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('btn-success', 'text-white');
-                    // Restore original class based on which button it was
-                    if (btn.id === 'btn-save-inputs') btn.classList.add('btn-outline-secondary');
-                    if (btn.id === 'btn-save-nar') btn.classList.add('btn-outline-dark');
-                }, 2000);
-            }
+        // Flash button feedback
+        if (btn) {
+            const originalClass = btn.id === 'btn-save-inputs'
+                ? 'btn-outline-secondary'
+                : 'btn-outline-dark';
+            this.#flashButton(btn, originalClass);
         }
     }
 
@@ -284,16 +284,13 @@ export class NarrativesPage {
      * Discards current text in the boxes and reloads from the saved Report object.
      */
     static handleRevert() {
-        const selectEl = document.getElementById('narrative-report-select');
-        if (!selectEl || selectEl.value === "") return;
+        const index = this.#getSelectedIndex();
+        if (index === -1) return;
 
-        // confirm before destroying work
         if (!confirm("Discard unsaved changes and reload the last saved version?")) {
             return;
         }
 
-        const index = parseInt(selectEl.value, 10);
-        // Reuse handleSelection to reload the data!
         this.handleSelection(index);
     }
 
@@ -340,10 +337,10 @@ export class NarrativesPage {
 
                 // Color Coding
                 let badgeClass = "bg-secondary"; 
-                if (label === "G") badgeClass = "bg-success";        
-                if (label === "F") badgeClass = "bg-primary";        
-                if (label === "E") badgeClass = "bg-info text-dark"; 
-                if (["A","B","C","D"].includes(label)) badgeClass = "bg-danger"; 
+                if (["B","C","D"].includes(label)) badgeClass = "bg-success";        
+                if (["G"].includes(label)) badgeClass = "bg-primary";        
+                if (["E","F"].includes(label)) badgeClass = "bg-info text-dark"; 
+                if (["A"].includes(label)) badgeClass = "bg-danger"; 
 
                 const badge = document.createElement('span');
                 badge.className = `badge ${badgeClass} border`;
@@ -363,16 +360,12 @@ export class NarrativesPage {
     }
 
     static handleGenerate() {
-        const selectEl = document.getElementById('narrative-report-select');
-        if (!selectEl || selectEl.value === "") return;
-
-        const index = parseInt(selectEl.value, 10);
-        const report = store.getReports()[index];
+        const report = this.#getSelectedReport();
         if (!report) return;
 
         const modeEl = document.querySelector('input[name="nar-method"]:checked');
         const mode = modeEl ? modeEl.value : 'manual';
-        
+
         let finalText = "";
 
         if (mode === 'manual') {
@@ -381,28 +374,17 @@ export class NarrativesPage {
             const max = AI_CONFIG.MAX_GENERATIONS_PER_REPORT;
             if (report.narrativeAICount >= max) {
                 alert(`AI Generation Limit Reached.\n\nYou have used ${report.narrativeAICount}/${max} AI attempts for this specific report.\n\nPlease edit the text manually or reset the report to try again.`);
-                return; // STOP HERE
+                return;
             }
-
-            // This puts the raw prompt in the box so you can verify the "Dynamic Few-Shot" logic
             finalText = PromptBuilder.build(report);
-            report.narrativeAICount ++
+            report.narrativeAICount++;
             console.log(`AI Gen Count for ${report.name}: ${report.narrativeAICount}/${max}`);
-            //store.upsertReport(report)
-            
         }
 
-        // 2. Output to UI
-        const outputBox = document.getElementById('nar-output');
-        outputBox.value = finalText;
-
-        // 3. Auto-Save Logic (Existing)
+        // Output and auto-save
+        document.getElementById('nar-output').value = finalText;
         report.generatedNarrative = finalText;
-        const now = new Date();
-        report.lastSavedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const timeLabel = document.getElementById('nar-last-saved');
-        if (timeLabel) timeLabel.textContent = `Last saved: ${report.lastSavedTime}`;
-        // You might want to update a label showing "Uses: 1/3"
+        this.#updateTimestamp(report);
         this.updateUsageLabel(report);
     }
 
@@ -437,40 +419,30 @@ export class NarrativesPage {
     }
 
     static handleClearToSaved() {
-        // 1. IDENTIFY REPORT
-        const selectEl = document.getElementById('narrative-report-select');
-        if (!selectEl || selectEl.value === "") return;
-
-        const index = parseInt(selectEl.value, 10);
-        const report = store.getReports()[index];
+        const report = this.#getSelectedReport();
         if (!report) return;
 
-        // 2. CHECK: Is there actually a saved version?
-        // If report.generatedNarrative is undefined, we revert to ""
         const savedText = report.generatedNarrative || "";
-        
-        // 3. CONFIRMATION (Optional but polite)
-        // If the box is empty, no need to confirm. 
-        // If the box matches the save, no need to confirm.
         const currentText = document.getElementById('nar-output').value;
-        
+
+        // Confirm if there are unsaved changes
         if (currentText !== savedText && currentText.trim() !== "") {
             if (!confirm("Discard unsaved changes and revert to the last saved version?")) {
                 return;
             }
         }
 
-        // 4. OVERWRITE UI WITH STORE DATA
+        // Revert UI
         const outputBox = document.getElementById('nar-output');
         if (outputBox) {
             outputBox.value = savedText;
-            
-            // Visual Feedback (Flash the box green briefly)
+
+            // Visual feedback
             outputBox.classList.add('bg-success', 'bg-opacity-10');
             setTimeout(() => outputBox.classList.remove('bg-success', 'bg-opacity-10'), 500);
         }
 
-        // 5. UPDATE STATUS LABEL
+        // Update status label
         const timeLabel = document.getElementById('nar-last-saved');
         if (timeLabel) timeLabel.textContent = `Reverted to: ${report.lastSavedTime || "Original"}`;
     }

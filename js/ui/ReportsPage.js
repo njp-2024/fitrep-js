@@ -5,7 +5,7 @@ import { ReportValidator } from '../services/Validation.js';
 import { CalculatorService } from '../services/Calculator.js';
 import { Sidebar } from './Sidebar.js';
 import { Navigation } from './Navigation.js';
-import { REPORT_ATTRIBUTES, SCORES } from '../Config.js'; // <--- Import Config
+import { REPORT_ATTRIBUTES, SCORES } from '../config/Config.js';
 
 export class ReportsPage {
 

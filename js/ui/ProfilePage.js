@@ -5,7 +5,7 @@ import { ProfileValidator } from '../services/Validation.js';
 import { PrecisionService } from '../services/PrecisionService.js';
 import { Sidebar } from './Sidebar.js';
 import { Navigation } from './Navigation.js';
-import { RANKS } from '../Config.js'; // <--- Import Ranks
+import { RANKS } from '../config/Config.js';
 
 export class ProfilePage {
     

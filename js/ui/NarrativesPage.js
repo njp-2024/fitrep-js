@@ -7,6 +7,7 @@ import { ManualGenerator } from '../services/ManualGenerator.js';
 import { PromptBuilder } from '../services/PromptBuilder.js';
 import { ExportService } from '../services/ExportService.js';
 import { AI_CONFIG } from '../config/AIConfig.js';
+import { CalculatorService } from '../services/Calculator.js';
 
 export class NarrativesPage {
 
@@ -100,6 +101,15 @@ export class NarrativesPage {
                 ExportService.downloadTextFile(filename, text);
             });
         }
+
+        const clearBtn = document.getElementById('btn-clear-nar'); 
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                this.handleClearToSaved();
+            });
+        }
+
+
     }
 
     /**
@@ -176,6 +186,7 @@ export class NarrativesPage {
         } else {
             this.updateUsageLabel(null); // Reset to 0/3
         }
+
 
         // Force validation check (which will disable the button since length is 0)
         this.handleValidation();
@@ -407,5 +418,60 @@ export class NarrativesPage {
             // Visual cue: Turn red if maxed out
             label.style.color = count >= max ? 'red' : 'inherit';
         }
+    }
+
+    static resetPage() {
+        console.log("Resetting Narratives Page...");
+
+        // 1. Clear Text Inputs
+        // all other inputs are cleared in update UI based on clearing this one
+        const reportSelect = document.getElementById("narrative-report-select");
+        if (reportSelect) reportSelect.value = "";
+
+        // need to reset RV's - to be sure cum RV's are reset
+        CalculatorService.calculateStats(store.getOriginalProfile(), store.getReports());
+
+        // reset sidebar to whatever is saved
+        Sidebar.refreshAll(store.getActiveProfile(), null, store.getReports(), store.getOriginalProfile());
+
+    }
+
+    static handleClearToSaved() {
+        // 1. IDENTIFY REPORT
+        const selectEl = document.getElementById('narrative-report-select');
+        if (!selectEl || selectEl.value === "") return;
+
+        const index = parseInt(selectEl.value, 10);
+        const report = store.getReports()[index];
+        if (!report) return;
+
+        // 2. CHECK: Is there actually a saved version?
+        // If report.generatedNarrative is undefined, we revert to ""
+        const savedText = report.generatedNarrative || "";
+        
+        // 3. CONFIRMATION (Optional but polite)
+        // If the box is empty, no need to confirm. 
+        // If the box matches the save, no need to confirm.
+        const currentText = document.getElementById('nar-output').value;
+        
+        if (currentText !== savedText && currentText.trim() !== "") {
+            if (!confirm("Discard unsaved changes and revert to the last saved version?")) {
+                return;
+            }
+        }
+
+        // 4. OVERWRITE UI WITH STORE DATA
+        const outputBox = document.getElementById('nar-output');
+        if (outputBox) {
+            outputBox.value = savedText;
+            
+            // Visual Feedback (Flash the box green briefly)
+            outputBox.classList.add('bg-success', 'bg-opacity-10');
+            setTimeout(() => outputBox.classList.remove('bg-success', 'bg-opacity-10'), 500);
+        }
+
+        // 5. UPDATE STATUS LABEL
+        const timeLabel = document.getElementById('nar-last-saved');
+        if (timeLabel) timeLabel.textContent = `Reverted to: ${report.lastSavedTime || "Original"}`;
     }
 }

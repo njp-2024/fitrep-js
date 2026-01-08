@@ -17,7 +17,10 @@ export class Sidebar {
      * @param {RankProfile} profile - The profile object (Real or Projected)
      */
     static updateProfileStats(originalProfile, activeProfile) {
-        if (!originalProfile || !activeProfile) return;
+        if (!originalProfile || !activeProfile) {
+            document.querySelectorAll('.profile-stat-reset').forEach(el => el.textContent = '-');
+            return;
+        }
 
         // Target Elements
         const avgEl = document.getElementById('op-avg');
@@ -89,7 +92,7 @@ export class Sidebar {
         tbody.innerHTML = ""; // Clear list
 
         if (reportsList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" class="text-muted fst-italic py-2">No reports yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" class="text-white-50 fst-italic py-2">No reports yet.</td></tr>`;
             return;
         }
 
@@ -112,7 +115,7 @@ export class Sidebar {
      * Convenience method to update all three sections at once
      */
     static refreshAll(activeProfile, formReport, reportsList, baseProfile) {
-        this.updateProfileTitle(activeProfile.rank)
+        this.updateProfileTitle(activeProfile ? activeProfile.rank : "")
         this.updateProfileStats(baseProfile, activeProfile);
         this.updateActiveReport(formReport, activeProfile ? activeProfile.rank : "");
         // Note: We usually only update history with the SAVED list, not projected

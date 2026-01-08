@@ -6,8 +6,10 @@
     <title>FitRep Calculator</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
 </head>
 <body class="bg-light">
 
@@ -42,20 +44,20 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td><span id="op-title">-</span></td>
-                                <td><span id="op-high">-</span></td>
-                                <td><span id="op-low">-</span></td>
-                                <td><span id="op-avg">-</span></td>
-                                <td><span id="op-reports">-</span></td>
+                                <td><span id="op-title" class="profile-stat-reset">-</span></td>
+                                <td><span id="op-high" class="profile-stat-reset">-</span></td>
+                                <td><span id="op-low" class="profile-stat-reset">-</span></td>
+                                <td><span id="op-avg" class="profile-stat-reset">-</span></td>
+                                <td><span id="op-reports" class="profile-stat-reset">-</span></td>
                             </tr>
                         </tbody>
                         <tbody>
                             <tr>
-                                <td class="fst-italic"><span id="ap-title">-</span></td>
-                                <td class="fst-italic"><span id="ap-high">-</span></td>
-                                <td class="fst-italic"><span id="ap-low">-</span></td>
-                                <td class="fst-italic"><span id="ap-avg">-</span></td>
-                                <td class="fst-italic"><span id="ap-reports">-</span></td>
+                                <td class="fst-italic"><span id="ap-title" class="profile-stat-reset">-</span></td>
+                                <td class="fst-italic"><span id="ap-high" class="profile-stat-reset">-</span></td>
+                                <td class="fst-italic"><span id="ap-low" class="profile-stat-reset">-</span></td>
+                                <td class="fst-italic"><span id="ap-avg" class="profile-stat-reset">-</span></td>
+                                <td class="fst-italic"><span id="ap-reports" class="profile-stat-reset">-</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -327,7 +329,9 @@
                                         <textarea id="nar-output" class="form-control flex-grow-1 bg-white mb-3" style="min-height: 200px; font-family: monospace;"></textarea>
                                         
                                         <div class="d-flex justify-content-end gap-2">
-                                            <button id="btn-clear-nar" class="btn btn-sm btn-link text-muted text-decoration-none">Clear</button>
+                                            <button id="btn-clear-nar" class="btn btn-outline-secondary" title="Revert to Saved">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
                                             <button id="btn-save-nar" class="btn btn-sm btn-outline-dark">
                                                 <i class="bi bi-save"></i> Save Narrative
                                             </button>

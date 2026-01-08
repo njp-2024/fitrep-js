@@ -2,6 +2,7 @@
 
 import { ReportsPage } from './ReportsPage.js';
 import { NarrativesPage } from './NarrativesPage.js';
+import { ProfilePage } from './ProfilePage.js';
 
 
 export class Navigation {
@@ -16,6 +17,7 @@ export class Navigation {
             reportsSection.classList.remove('d-none');
             
             // Trigger the UI update so Rank appears
+            ReportsPage.resetPage();
             ReportsPage.updateUI(); 
         }
         
@@ -35,9 +37,28 @@ export class Navigation {
             navSection.classList.remove('d-none');
         
             // ADD THIS LINE:
+            NarrativesPage.resetPage();
             NarrativesPage.updateUI(); 
         }
 
         window.scrollTo(0, 0);
     }
+
+    static showProfilePage() {
+        // Hide others
+        document.getElementById('page-narratives').classList.add('d-none');
+        document.getElementById('page-reports').classList.add('d-none');
+        
+        // Show Narratives
+        const navSection = document.getElementById('page-profile');
+        if (navSection) {
+            navSection.classList.remove('d-none');
+        
+            // ADD THIS LINE:
+            ProfilePage.resetPage(); 
+        }
+
+        window.scrollTo(0, 0);
+    }
+
 }

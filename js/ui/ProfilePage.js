@@ -58,4 +58,27 @@ export class ProfilePage {
         Navigation.showReportsPage();
     }
 
+    static resetPage() {
+        console.log("Resetting Profile Page...");
+        
+        // 1. Clear Text Inputs
+        const rankDisplay = document.getElementById("profile-rank");
+        if (rankDisplay) rankDisplay.value = "";
+
+        const reports = document.getElementById("profile-reports");
+        if (reports) reports.value = "";
+
+        const avg = document.getElementById("profile-avg");
+        if (avg) avg.value = "";
+
+        const high = document.getElementById("profile-high");
+        if (high) high.value = "";
+
+        const low = document.getElementById("profile-low");
+        if (low) low.value = "";
+
+        // reset sidebar to whatever is saved
+        Sidebar.refreshAll(store.getActiveProfile(), null, store.getReports(), store.getOriginalProfile());
+    }
+
 }

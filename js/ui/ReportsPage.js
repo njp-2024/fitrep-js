@@ -35,6 +35,18 @@ export class ReportsPage {
         if (finishBtn) {
             finishBtn.addEventListener('click', () => Navigation.showNarrativesPage());
         }
+
+        // --- RESET PROFILE BUTTON ---
+        const resetBtn = document.getElementById('btn-reset-profile');
+        if (resetBtn) {
+            // Remove old listeners to prevent double-firing if init is called multiple times
+            const newBtn = resetBtn.cloneNode(true);
+            resetBtn.parentNode.replaceChild(newBtn, resetBtn);
+
+            newBtn.addEventListener('click', () => {
+                this.handleResetApp();
+            });
+        }
     }
 
     static initReportForm() {
@@ -189,6 +201,25 @@ export class ReportsPage {
         }
     }
 
+    static handleResetApp() {
+        // 1. ASK FOR CONFIRMATION
+        const choice = confirm("WARNING: This will delete your RS Profile and ALL generated reports.\n\nAre you sure you want to start over?");
+        
+        if (!choice) {
+            return; // 3a. User Cancelled
+        }
+
+        // 3b. USER CONFIRMED -> WIPE DATA
+        store.reset();
+
+        // Clear local inputs on this page immediately so they don't linger
+        this.resetPage(); 
+
+        // 4b. NAVIGATE TO PROFILE PAGE
+        // We trigger a click on the Profile Navigation Tab to switch views
+        Navigation.showProfilePage();
+    }
+
 
     //////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////// Helpers //////////////////////////////////////////
@@ -268,4 +299,30 @@ export class ReportsPage {
         
         document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
     }
+
+    static resetPage() {
+        console.log("Resetting Reports Page...");
+
+        // 1. Clear Text Inputs
+        const rankDisplay = document.getElementById("rpt-rank-display");
+        if (rankDisplay) rankDisplay.value = store.getActiveProfile()?.rank || "";
+
+        const name = document.getElementById("rpt-name");
+        if (name) name.value = "";
+
+        // clears the buttons
+        this.handleAutoPopulation("");
+
+        // update the add button state
+        this.updateAddButtonState("")
+
+        // reset RV's to be safe
+        // need to reset RV's - to be sure cum RV's are reset
+        CalculatorService.calculateStats(store.getOriginalProfile(), store.getReports());
+
+        // reset sidebar to whatever is saved
+        Sidebar.refreshAll(store.getActiveProfile(), null, store.getReports(), store.getOriginalProfile());
+
+    }
+
 }

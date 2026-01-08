@@ -33,7 +33,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 yarn.lock
 
 # Build Outputs (future-proofing)
@@ -44,3 +43,6 @@ build/
 .env
 .env.local
 .env.*.local
+
+# Local Netlify folder
+.netlify

@@ -1,0 +1,10 @@
+[build]
+  # The directory where your HTML lives
+  publish = "." 
+  
+  # The directory where your backend functions live
+  functions = "netlify/functions"
+
+[dev]
+  # Helps when running locally
+  framework = "#static"

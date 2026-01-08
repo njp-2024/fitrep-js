@@ -8,6 +8,7 @@ import { PromptBuilder } from '../services/PromptBuilder.js';
 import { ExportService } from '../services/ExportService.js';
 import { AI_CONFIG } from '../config/AIConfig.js';
 import { CalculatorService } from '../services/Calculator.js';
+import LLMService from '../services/LLMService.js';
 
 export class NarrativesPage {
 
@@ -359,7 +360,7 @@ export class NarrativesPage {
         });
     }
 
-    static handleGenerate() {
+    static handleGenerateORIGINAL() {
         const report = this.#getSelectedReport();
         if (!report) return;
 
@@ -387,6 +388,78 @@ export class NarrativesPage {
         this.#updateTimestamp(report);
         this.updateUsageLabel(report);
     }
+
+    static async handleGenerate() {
+        const report = this.#getSelectedReport();
+        if (!report) return;
+
+        const modeEl = document.querySelector('input[name="nar-method"]:checked');
+        const mode = modeEl ? modeEl.value : 'manual';
+        const genBtn = document.getElementById('btn-generate-narrative');
+        const outputBox = document.getElementById('nar-output');
+
+        let finalText = "";
+
+        // --- OPTION A: MANUAL ---
+        if (mode === 'manual') {
+            finalText = ManualGenerator.generate(report);
+            this.#finalizeGeneration(report, finalText);
+        } 
+        
+        // --- OPTION B: AI ---
+        else if (mode === 'ai') {
+            const max = AI_CONFIG.MAX_GENERATIONS_PER_REPORT;
+            
+            // 1. Limit Check
+            if (report.narrativeAICount >= max) {
+                alert(`AI Generation Limit Reached.\n\nYou have used ${report.narrativeAICount}/${max} attempts.`);
+                return;
+            }
+
+            // 2. Loading State (Disable UI)
+            const originalBtnText = genBtn.innerHTML;
+            genBtn.disabled = true;
+            genBtn.innerHTML = `Drafting... <span class="spinner-border spinner-border-sm"></span>`;
+
+            try {
+                // 3. Build Prompt
+                // TEMP: We use a simple string to test the connection first. 
+                // We will build the real PromptBuilder in the next phase.
+                //const prompt = `Write a short USMC performance evaluation for Rank: ${report.rank} Name: ${report.name}.`;
+                const prompt = PromptBuilder.build(report);
+
+                // 4. Call Netlify Backend (Wait for it...)
+                finalText = await LLMService.generateNarrative(prompt);
+
+                // 5. Success: Increment Counter & Finalize
+                report.narrativeAICount++;
+                console.log(`AI Gen Count for ${report.name}: ${report.narrativeAICount}/${max}`);
+                
+                this.#finalizeGeneration(report, finalText);
+
+            } catch (error) {
+                console.error(error);
+                alert(`AI Error: ${error.message}`);
+            } finally {
+                // 6. Reset UI (Always runs, success or fail)
+                genBtn.disabled = false;
+                genBtn.innerHTML = originalBtnText;
+            }
+        }
+    }
+
+    // Helper to handle saving and UI updates for both modes
+    static #finalizeGeneration(report, text) {
+        document.getElementById('nar-output').value = text;
+        report.generatedNarrative = text;
+        
+        // Ensure you are saving to your store
+        store.upsertReport(report); 
+        
+        this.#updateTimestamp(report);
+        this.updateUsageLabel(report);
+    }
+    
 
     // Helper to show the count on screen
     static updateUsageLabel(report) {
